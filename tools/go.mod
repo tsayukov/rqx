@@ -1,4 +1,4 @@
-module github.com/tsayukov/golanglib/tools // TODO: set the parent module as a prefix
+module github.com/tsayukov/rqx/tools
 
 go 1.22.0
 
