@@ -1,3 +1,3 @@
-module github.com/tsayukov/golanglib // TODO: set a module name
+module github.com/tsayukov/rqx
 
-go 1.24 // TODO: set the appropriate version of Go
+go 1.18

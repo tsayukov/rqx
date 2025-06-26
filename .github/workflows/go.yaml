@@ -21,8 +21,8 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: ">=1.18" # TODO: set the appropriate (range of) versions of Go
-          check-latest: 'true'
+          go-version: ">=1.18"
+          check-latest: "true"
           cache-dependency-path: "go.sum"
 
       - name: Download dependencies
@@ -31,7 +31,7 @@ jobs:
       - name: Install golangci-lint
         uses: golangci/golangci-lint-action@v8
         with:
-          version: v2.1.6 # TODO: set the appropriate version of golangci-lint
+          version: v2.1.6
           # Use the official action to download, but do not run it.
           args: --help
 

@@ -1,7 +1,6 @@
-# golang-lib
+# 🌐 rqx
 
-This is a simple Go library template. Please go through all the TODOs
-in the files and fix them.
+Package `rqx` helps to construct HTTP requests.
 
 ## Table of Contents
 
@@ -11,19 +10,15 @@ in the files and fix them.
 
 ## Installation
 
-TODO: change the repository link.
-
 ```bash
-go get github.com/tsayukov/golanglib
+go get github.com/tsayukov/rqx
 ```
 
 ## Usage
 
-TODO: add usage examples or links to them. 
+TODO: add usage examples or links to them.
 
 ## License
-
-TODO: use a different license if you need to.
 
 This package is licensed under the terms of the MIT License
 (see [LICENSE][license] file).
