@@ -1,0 +1,42 @@
+name: Go
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "v*" ]
+
+  pull_request:
+    branches: [ "main" ]
+
+  # Run the workflow manually.
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ">=1.18" # TODO: set the appropriate (range of) versions of Go
+          check-latest: 'true'
+          cache-dependency-path: "go.sum"
+
+      - name: Download dependencies
+        run: make mod/download
+
+      - name: Install golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.1.6 # TODO: set the appropriate version of golangci-lint
+          # Use the official action to download, but do not run it.
+          args: --help
+
+      - name: Audit
+        run: make audit
+
+      - name: Test
+        run: make test
