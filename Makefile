@@ -1,6 +1,14 @@
+##:
 # ============================================================================ #
 # This is a multi-platform Makefile, trying to support both Unix-like
 # and Windows operating systems.
+#
+# Every comment line that starts with two '#' is parsed by the 'help' target
+# as part of the help message:
+#  - use a single ':' to output an empty line;
+#  - use '<target>:<description>' for a single-line description;
+#  - use '<target>:<description>' with the following ':<description>'
+#    for a multiline description.
 #
 # Note that to to split a PowerShell command line over multiple lines
 # use a comment block with a backslash inside:
@@ -23,8 +31,10 @@ endif
 .PHONY: help
 help:
 ifeq ($(OS),Windows_NT)
-	@ Write-Output "Usage:"
-	@ (Get-Content $(MAKEFILE_LIST)) -match "^##" -replace "^##","" <#\
+	@ Write-Host "Usage:" -NoNewline
+    # Hack: replace two '#' with the NULL character to force ConvertFrom-Csv
+    # to print empty lines.
+	@ (Get-Content $(MAKEFILE_LIST)) -match "^##" -replace "^##","$$([char]0x0)" <#\
  #> | ConvertFrom-Csv -Delimiter ":" -Header Target,Description <#\
  #> | Format-Table <#\
  #>     -AutoSize -HideTableHeaders <#\
@@ -33,7 +43,8 @@ else
 	@ echo 'Usage:'
 	@ sed --quiet 's/^##//p' $(MAKEFILE_LIST) \
     | column --table --separator ':' \
-    | sed --expression='s/^/ /'
+    | sed --expression='s/^/ /' \
+    && echo
 endif
 
 ## all: run audit and tests
@@ -41,20 +52,35 @@ endif
 all: audit test ;
 
 # ============================================================================ #
-# Variables
-#
+##:
+##: Variables
+##:
 # These variables can be changed here directly by editing this file
 # or by passing them into the `make` call,
 # e.g., `make <variable_1>=<value_1> <variable_2>=<value_2> [...]`.
 # ============================================================================ #
 
+## BINARY_DIR: get the directory with binaries
 BINARY_DIR = bin
+__VARIABLES__ += BINARY_DIR
 
 # Directory containing the Makefile.
 PROJECT_ROOT = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 export GOBIN ?= $(PROJECT_ROOT)$(BINARY_DIR)
 export PATH := $(GOBIN)$(LIST_SEP)$(PATH)
+
+# Generate getters for all variables.
+define make_get_variable
+.PHONY: $1
+$1:
+	@ echo "$($1)"
+endef
+$(foreach var,$(__VARIABLES__), \
+    $(eval \
+        $(call make_get_variable,$(var)) \
+    ) \
+)
 
 # ============================================================================ #
 # Helpers
@@ -94,14 +120,17 @@ cgo/disable:
 	@ go env -w CGO_ENABLED=0
 
 # ============================================================================ #
-# Quality control
+##:
+##: Quality control
+##:
 # ============================================================================ #
 
 ## audit: run quality control checks
 .PHONY: audit
 audit: fmt/no-dirty mod/tidy-diff mod/verify govulncheck golangci-lint ;
 
-## mod/tidy-diff: check missing and unused modules without modifying the `go.mod` and `go.sum` files
+## mod/tidy-diff: check missing and unused modules without modifying
+##              : the `go.mod` and `go.sum` files
 .PHONY: mod/tidy-diff
 mod/tidy-diff:
 	@ go mod tidy -diff
@@ -130,7 +159,8 @@ govulncheck: install/govulncheck
 fmt:
 	@ go fmt ./...
 
-## fmt/no-dirty: gofmt (reformat) package sources and fail if there are some changes
+## fmt/no-dirty: gofmt (reformat) package sources and fail if there are some
+##             : changes
 .PHONY: fmt/no-dirty
 fmt/no-dirty:
 ifeq ($(OS),Windows_NT)
@@ -161,7 +191,9 @@ test/cover: create/binary_dir cgo/enable
 	@ go tool cover -html='$(BINARY_DIR)/coverage.out' -o '$(BINARY_DIR)/coverage.html'
 
 # ============================================================================ #
-# Build
+##:
+##: Build
+##:
 # ============================================================================ #
 
 ## mod/download: download modules to local cache
