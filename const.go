@@ -81,3 +81,13 @@ const (
 	HeaderAccept             HeaderKey = "Accept"
 	HeaderAuthorization      HeaderKey = "Authorization"
 )
+
+// ContentType is the HTTP Content-Type representation header is used to indicate
+// the original media type of resource before any content encoding is applied.
+type ContentType string
+
+const (
+	ContentTextPlain ContentType = "text/plain"
+	ContentJSON      ContentType = "application/json"
+	ContentXML       ContentType = "application/xml"
+)
