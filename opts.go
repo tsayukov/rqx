@@ -5,6 +5,7 @@ package rqx
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/tsayukov/optparams"
 )
@@ -13,6 +14,14 @@ import (
 func WithContext(ctx context.Context) optparams.Func[doParams] {
 	return func(params *doParams) error {
 		params.ctx = ctx
+		return nil
+	}
+}
+
+// WithClient sets the given [net/http.Client] for the current request.
+func WithClient(c *http.Client) optparams.Func[doParams] {
+	return func(params *doParams) error {
+		params.client = c
 		return nil
 	}
 }
