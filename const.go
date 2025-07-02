@@ -71,3 +71,13 @@ const (
 	//    and a matching Content-Location header.
 	PATCH HTTPMethod = "PATCH"
 )
+
+// HeaderKey is a case-insensitive name of the HTTP header.
+type HeaderKey string
+
+const (
+	HeaderContentType        HeaderKey = "Content-Type"
+	HeaderContentDisposition HeaderKey = "Content-Disposition"
+	HeaderAccept             HeaderKey = "Accept"
+	HeaderAuthorization      HeaderKey = "Authorization"
+)
