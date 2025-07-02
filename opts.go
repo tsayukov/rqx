@@ -10,6 +10,10 @@ import (
 	"github.com/tsayukov/optparams"
 )
 
+func optionalBool[B ~bool](value ...B) bool {
+	return bool(len(value) > 0 && value[0])
+}
+
 // WithContext sets the given [context.Context] for the current request.
 func WithContext(ctx context.Context) optparams.Func[doParams] {
 	return func(params *doParams) error {
@@ -39,4 +43,29 @@ func WithQuery(data any) optparams.Func[doParams] {
 	return func(params *doParams) error {
 		return params.urlBuilder.appendQuery(data)
 	}
+}
+
+func WithHeader(key HeaderKey, value string, appendMode ...HeaderAppendMode) optparams.Func[doParams] {
+	return withHeader(key, value, withHeaderOptions{
+		isKeyCanonicalized: false,
+		doesAddValueToEnd:  optionalBool(appendMode...),
+	})
+}
+
+// WithContentType sets the HTTP Content-Type representation header, overwriting
+// the previous one, if any.
+func WithContentType(value string, appendMode ...HeaderAppendMode) optparams.Func[doParams] {
+	return withHeader(HeaderContentType, value, withHeaderOptions{
+		isKeyCanonicalized: true,
+		doesAddValueToEnd:  optionalBool(appendMode...),
+	})
+}
+
+// WithAccept sets the HTTP Accept request header, overwriting the previous one,
+// if any.
+func WithAccept(value string, appendMode ...HeaderAppendMode) optparams.Func[doParams] {
+	return withHeader(HeaderAccept, value, withHeaderOptions{
+		isKeyCanonicalized: true,
+		doesAddValueToEnd:  optionalBool(appendMode...),
+	})
 }
