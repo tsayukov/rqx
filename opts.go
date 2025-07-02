@@ -5,6 +5,7 @@ package rqx
 
 import (
 	"context"
+	"encoding/base64"
 	"net/http"
 
 	"github.com/tsayukov/optparams"
@@ -68,4 +69,19 @@ func WithAccept(value string, appendMode ...HeaderAppendMode) optparams.Func[doP
 		isKeyCanonicalized: true,
 		doesAddValueToEnd:  optionalBool(appendMode...),
 	})
+}
+
+// WithAuth sets the HTTP Authorization request header with the given value.
+func WithAuth(value string, appendMode ...HeaderAppendMode) optparams.Func[doParams] {
+	return withHeader(HeaderAuthorization, value, withHeaderOptions{
+		isKeyCanonicalized: true,
+		doesAddValueToEnd:  optionalBool(appendMode...),
+	})
+}
+
+// WithBasicAuth sets the HTTP Authorization header to use HTTP Basic Authentication
+// with the provided username and password.
+func WithBasicAuth(username, password string) optparams.Func[doParams] {
+	enc := base64.StdEncoding.EncodeToString([]byte(username + ":" + password))
+	return WithAuth("Basic " + enc)
 }
