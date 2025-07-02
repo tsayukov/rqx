@@ -25,3 +25,18 @@ func WithClient(c *http.Client) optparams.Func[doParams] {
 		return nil
 	}
 }
+
+// WithURLPaths appends the given paths separated by '/' to the URL. Note that
+// the resulting URL is not escaped.
+func WithURLPaths(paths ...string) optparams.Func[doParams] {
+	return func(params *doParams) error {
+		return params.urlBuilder.appendPaths(paths...)
+	}
+}
+
+// WithQuery adds a properly escaped query string encoded from the given data.
+func WithQuery(data any) optparams.Func[doParams] {
+	return func(params *doParams) error {
+		return params.urlBuilder.appendQuery(data)
+	}
+}
