@@ -4,6 +4,9 @@
 package rqx
 
 import (
+	"bytes"
+	"fmt"
+	"io"
 	"net/http"
 	"slices"
 
@@ -49,3 +52,33 @@ func (e ErrorStatuses) ToJSON(resultError error) optparams.Func[doParams] {
 func (e ErrorStatuses) ToXML(resultError error) optparams.Func[doParams] {
 	return e.To(resultError, xmlDecoder)
 }
+
+// UnhandledResponseError is an error for the response that did not match
+// any handlers.
+type UnhandledResponseError struct {
+	status  int
+	headers http.Header
+	body    *bytes.Buffer
+}
+
+func newUnhandledResponse(resp *http.Response) error {
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	return &UnhandledResponseError{
+		status:  resp.StatusCode,
+		headers: resp.Header.Clone(),
+		body:    bytes.NewBuffer(body),
+	}
+}
+
+func (u *UnhandledResponseError) Error() string {
+	return fmt.Sprintf(
+		"unhandled response with status %d:\n\theader: %#v\n\tbody: %s",
+		u.status, u.headers, u.body.String(),
+	)
+}
+
+var _ error = (*UnhandledResponseError)(nil)
