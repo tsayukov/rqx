@@ -4,6 +4,7 @@
 package rqx
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"slices"
@@ -39,5 +40,23 @@ func (rc RateLimitStatuses) Cooldown(handler RateLimitHandler) optparams.Func[do
 			})
 
 		return nil
+	}
+}
+
+// NewRateLimitHandlerBeforeDone creates [RateLimitHandler] that checks whether
+// work done on behalf of the given context should be canceled, otherwise calls
+// the given handler.
+func NewRateLimitHandlerBeforeDone(handler RateLimitHandler) RateLimitHandler {
+	return func(ctx context.Context, resp *http.Response) error {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+			if err := handler(ctx, resp); err != nil {
+				return err
+			}
+
+			return nil
+		}
 	}
 }
