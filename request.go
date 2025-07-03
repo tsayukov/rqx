@@ -9,21 +9,6 @@ import (
 	"net/http"
 )
 
-func prepareRequest(httpMethod HTTPMethod, url string, params *doParams) (*http.Request, error) {
-	req, err := http.NewRequestWithContext(params.ctx, string(httpMethod), url, params.body)
-	if err != nil {
-		return nil, err
-	}
-
-	for key, values := range params.headers {
-		// No need to call Header.Add() for each value:
-		// the key has been already canonicalized.
-		req.Header[key] = append(req.Header[key], values...)
-	}
-
-	return req, nil
-}
-
 // Do sends an HTTP request given [HTTPMethod], URL, and optional parameters.
 //
 // By default, [context.Background] is used. To set an appropriate context,
@@ -59,7 +44,7 @@ func prepareRequest(httpMethod HTTPMethod, url string, params *doParams) (*http.
 //   - [WithOK];
 //   - [WithError];
 //   - [WithRateLimit].
-func Do(httpMethod HTTPMethod, url string, opts ...Option) (retErr error) {
+func Do(httpMethod HTTPMethod, url string, opts ...Option) error {
 	params, err := newDoParams(opts...)
 	if err != nil {
 		return err
@@ -68,56 +53,15 @@ func Do(httpMethod HTTPMethod, url string, opts ...Option) (retErr error) {
 	url = params.urlBuilder.build(url)
 
 	for {
-		req, err := prepareRequest(httpMethod, url, params)
+		tryAgain, err := do(httpMethod, url, params)
 		if err != nil {
 			return err
 		}
-
-		if err := params.handler.applyBefore(req); err != nil {
-			return err
+		if tryAgain {
+			continue
 		}
 
-		resp, err := params.client.Do(req)
-		if err != nil {
-			return err
-		}
-
-		// We need to close the body manually because we are operating
-		// in the loop.
-		closeBody := func(body io.ReadCloser) {
-			if err := body.Close(); err != nil {
-				retErr = errors.Join(retErr, err)
-			}
-		}
-
-		if err := params.handler.applyAfter(resp); err != nil {
-			closeBody(resp.Body)
-			return err
-		}
-
-		match, err := params.handler.matchOK(resp)
-		if match {
-			closeBody(resp.Body)
-			return err // nil or error
-		}
-
-		if err := params.handler.matchError(resp); err != nil {
-			if errors.Is(err, errRateLimit) && params.handler.rateLimitResponse != nil {
-				if err := params.handler.rateLimitResponse(params.ctx, resp); err != nil {
-					return err
-				}
-
-				closeBody(resp.Body)
-				continue
-			}
-
-			closeBody(resp.Body)
-			return err
-		}
-
-		unhandledError := newUnhandledResponse(resp)
-		closeBody(resp.Body)
-		return unhandledError
+		return nil
 	}
 }
 
@@ -149,4 +93,59 @@ func Options(url string, opts ...Option) error {
 // Patch is a shortcut for [Do] for the [PATCH] HTTP method.
 func Patch(url string, opts ...Option) error {
 	return Do(PATCH, url, opts...)
+}
+
+func prepareRequest(httpMethod HTTPMethod, url string, params *doParams) (*http.Request, error) {
+	req, err := http.NewRequestWithContext(params.ctx, string(httpMethod), url, params.body)
+	if err != nil {
+		return nil, err
+	}
+
+	for key, values := range params.headers {
+		// No need to call Header.Add() for each value:
+		// the key has been already canonicalized.
+		req.Header[key] = append(req.Header[key], values...)
+	}
+
+	return req, nil
+}
+
+func do(httpMethod HTTPMethod, url string, params *doParams) (tryAgain bool, retErr error) {
+	req, err := prepareRequest(httpMethod, url, params)
+	if err != nil {
+		return false, err
+	}
+
+	if err := params.handler.applyBefore(req); err != nil {
+		return false, err
+	}
+
+	resp, err := params.client.Do(req)
+	if err != nil {
+		return false, err
+	}
+
+	defer func(body io.ReadCloser) { retErr = errors.Join(retErr, body.Close()) }(resp.Body)
+
+	if err := params.handler.applyAfter(resp); err != nil {
+		return false, err
+	}
+
+	if match, err := params.handler.matchOK(resp); match { // if HTTP statuses are OK
+		return false, err // nil or error
+	}
+
+	if err := params.handler.matchError(resp); err != nil {
+		if errors.Is(err, errRateLimit) && params.handler.rateLimitResponse != nil {
+			if err := params.handler.rateLimitResponse(params.ctx, resp); err != nil {
+				return false, err
+			}
+
+			return true, nil
+		}
+
+		return false, err
+	}
+
+	return false, newUnhandledResponse(resp)
 }
