@@ -7,8 +7,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-
-	"github.com/tsayukov/optparams"
 )
 
 func prepareRequest(httpMethod HTTPMethod, url string, params *doParams) (*http.Request, error) {
@@ -61,7 +59,7 @@ func prepareRequest(httpMethod HTTPMethod, url string, params *doParams) (*http.
 //   - [WithOK];
 //   - [WithError];
 //   - [WithRateLimit].
-func Do(httpMethod HTTPMethod, url string, opts ...optparams.Func[doParams]) (retErr error) {
+func Do(httpMethod HTTPMethod, url string, opts ...Option) (retErr error) {
 	params, err := newDoParams(opts...)
 	if err != nil {
 		return err
@@ -124,31 +122,31 @@ func Do(httpMethod HTTPMethod, url string, opts ...optparams.Func[doParams]) (re
 }
 
 // Get is a shortcut for [Do] for the [GET] HTTP method.
-func Get(url string, opts ...optparams.Func[doParams]) error {
+func Get(url string, opts ...Option) error {
 	return Do(GET, url, opts...)
 }
 
 // Post is a shortcut for [Do] for the [POST] HTTP method.
-func Post(url string, opts ...optparams.Func[doParams]) error {
+func Post(url string, opts ...Option) error {
 	return Do(POST, url, opts...)
 }
 
 // Put is a shortcut for [Do] for the [PUT] HTTP method.
-func Put(url string, opts ...optparams.Func[doParams]) error {
+func Put(url string, opts ...Option) error {
 	return Do(PUT, url, opts...)
 }
 
 // Delete is a shortcut for [Do] for the [DELETE] HTTP method.
-func Delete(url string, opts ...optparams.Func[doParams]) error {
+func Delete(url string, opts ...Option) error {
 	return Do(DELETE, url, opts...)
 }
 
 // Options is a shortcut for [Do] for the [OPTIONS] HTTP method.
-func Options(url string, opts ...optparams.Func[doParams]) error {
+func Options(url string, opts ...Option) error {
 	return Do(OPTIONS, url, opts...)
 }
 
 // Patch is a shortcut for [Do] for the [PATCH] HTTP method.
-func Patch(url string, opts ...optparams.Func[doParams]) error {
+func Patch(url string, opts ...Option) error {
 	return Do(PATCH, url, opts...)
 }
