@@ -210,3 +210,34 @@ func WithHandlerAfterResponse(handler AfterResponseHandler) optparams.Func[doPar
 		return nil
 	}
 }
+
+// WithOK returns [OKStatuses] to add a handler for the successful HTTP response.
+// By default, [net/http.StatusOK] is used as the successful HTTP status code.
+func WithOK(statuses ...int) OKStatuses {
+	if len(statuses) == 0 {
+		return []int{http.StatusOK}
+	}
+
+	return statuses
+}
+
+func withStatuses[S interface {
+	ErrorStatuses | RateLimitStatuses
+}](status int, statuses ...int) S {
+	s := make(S, 0, 1+len(statuses))
+	s = append(s, status)
+	s = append(s, statuses...)
+
+	return s
+}
+
+// WithError returns [ErrorStatuses] to add a handler for the error HTTP response.
+func WithError(status int, statuses ...int) ErrorStatuses {
+	return withStatuses[ErrorStatuses](status, statuses...)
+}
+
+// WithRateLimit returns [RateLimitStatuses] to add a handler for the error HTTP
+// response when the rate limit is reached.
+func WithRateLimit(status int, statuses ...int) RateLimitStatuses {
+	return withStatuses[RateLimitStatuses](status, statuses...)
+}
