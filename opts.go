@@ -11,6 +11,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"strings"
 
@@ -182,6 +183,14 @@ func WithXML(data any) optparams.Func[doParams] {
 		},
 		WithContentType(string(ContentXML)),
 	)
+}
+
+// WithMultipartForm returns [MultipartFormBuilder] to add multipart sections
+// sequentially before calling the [MultipartFormBuilder.Body] method.
+func WithMultipartForm() *MultipartFormBuilder {
+	var b MultipartFormBuilder
+	b.mw = multipart.NewWriter(&b.buf)
+	return &b
 }
 
 // WithHandlerBeforeResponse adds the given handler to call it right before
