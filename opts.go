@@ -183,3 +183,21 @@ func WithXML(data any) optparams.Func[doParams] {
 		WithContentType(string(ContentXML)),
 	)
 }
+
+// WithHandlerBeforeResponse adds the given handler to call it right before
+// the sending HTTP request.
+func WithHandlerBeforeResponse(handler BeforeResponseHandler) optparams.Func[doParams] {
+	return func(params *doParams) error {
+		params.handler.beforeResponse = append(params.handler.beforeResponse, handler)
+		return nil
+	}
+}
+
+// WithHandlerAfterResponse adds the given handler to call it immediately after
+// receiving non-nil [net/http.Response].
+func WithHandlerAfterResponse(handler AfterResponseHandler) optparams.Func[doParams] {
+	return func(params *doParams) error {
+		params.handler.afterResponse = append(params.handler.afterResponse, handler)
+		return nil
+	}
+}
