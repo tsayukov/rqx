@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"net/textproto"
 	"os"
+	"path/filepath"
 	"regexp"
 	"testing"
 
@@ -22,7 +23,7 @@ func Test_CanonicalHeaderKeys(t *testing.T) {
 func allHeaderKeysFromFile(t *testing.T, filename string) []string {
 	t.Helper()
 
-	file, err := os.Open(filename)
+	file, err := os.Open(filepath.Clean(filename))
 	if err != nil {
 		t.Fatal(err)
 	}
