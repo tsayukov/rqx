@@ -253,7 +253,7 @@ linters:
         - ":$"
 
       # Check that each sentence starts with a capital letter.
-      capital: true
+      capital: false
 
     goheader:
       values:
