@@ -293,3 +293,9 @@ linters:
       - source: "^func Test"
         linters:
           - funlen
+
+      # doParams has a context.Context field for the same reason
+      # as net/http.Request does.
+      - path: "do_params.go"
+        linters:
+          - containedctx
