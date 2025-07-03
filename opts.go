@@ -18,12 +18,14 @@ import (
 	"github.com/tsayukov/optparams"
 )
 
+type Option = optparams.Func[doParams]
+
 func optionalBool[B ~bool](value ...B) bool {
 	return bool(len(value) > 0 && value[0])
 }
 
 // WithContext sets the given [context.Context] for the current request.
-func WithContext(ctx context.Context) optparams.Func[doParams] {
+func WithContext(ctx context.Context) Option {
 	return func(params *doParams) error {
 		params.ctx = ctx
 		return nil
@@ -31,7 +33,7 @@ func WithContext(ctx context.Context) optparams.Func[doParams] {
 }
 
 // WithClient sets the given [net/http.Client] for the current request.
-func WithClient(c *http.Client) optparams.Func[doParams] {
+func WithClient(c *http.Client) Option {
 	return func(params *doParams) error {
 		params.client = c
 		return nil
@@ -40,20 +42,20 @@ func WithClient(c *http.Client) optparams.Func[doParams] {
 
 // WithURLPaths appends the given paths separated by '/' to the URL. Note that
 // the resulting URL is not escaped.
-func WithURLPaths(paths ...string) optparams.Func[doParams] {
+func WithURLPaths(paths ...string) Option {
 	return func(params *doParams) error {
 		return params.urlBuilder.appendPaths(paths...)
 	}
 }
 
 // WithQuery adds a properly escaped query string encoded from the given data.
-func WithQuery(data any) optparams.Func[doParams] {
+func WithQuery(data any) Option {
 	return func(params *doParams) error {
 		return params.urlBuilder.appendQuery(data)
 	}
 }
 
-func WithHeader(key HeaderKey, value string, appendMode ...HeaderAppendMode) optparams.Func[doParams] {
+func WithHeader(key HeaderKey, value string, appendMode ...HeaderAppendMode) Option {
 	return withHeader(key, value, withHeaderOptions{
 		isKeyCanonicalized: false,
 		doesAddValueToEnd:  optionalBool(appendMode...),
@@ -62,7 +64,7 @@ func WithHeader(key HeaderKey, value string, appendMode ...HeaderAppendMode) opt
 
 // WithContentType sets the HTTP Content-Type representation header, overwriting
 // the previous one, if any.
-func WithContentType(value string, appendMode ...HeaderAppendMode) optparams.Func[doParams] {
+func WithContentType(value string, appendMode ...HeaderAppendMode) Option {
 	return withHeader(HeaderContentType, value, withHeaderOptions{
 		isKeyCanonicalized: true,
 		doesAddValueToEnd:  optionalBool(appendMode...),
@@ -71,7 +73,7 @@ func WithContentType(value string, appendMode ...HeaderAppendMode) optparams.Fun
 
 // WithAccept sets the HTTP Accept request header, overwriting the previous one,
 // if any.
-func WithAccept(value string, appendMode ...HeaderAppendMode) optparams.Func[doParams] {
+func WithAccept(value string, appendMode ...HeaderAppendMode) Option {
 	return withHeader(HeaderAccept, value, withHeaderOptions{
 		isKeyCanonicalized: true,
 		doesAddValueToEnd:  optionalBool(appendMode...),
@@ -79,7 +81,7 @@ func WithAccept(value string, appendMode ...HeaderAppendMode) optparams.Func[doP
 }
 
 // WithAuth sets the HTTP Authorization request header with the given value.
-func WithAuth(value string, appendMode ...HeaderAppendMode) optparams.Func[doParams] {
+func WithAuth(value string, appendMode ...HeaderAppendMode) Option {
 	return withHeader(HeaderAuthorization, value, withHeaderOptions{
 		isKeyCanonicalized: true,
 		doesAddValueToEnd:  optionalBool(appendMode...),
@@ -88,7 +90,7 @@ func WithAuth(value string, appendMode ...HeaderAppendMode) optparams.Func[doPar
 
 // WithBasicAuth sets the HTTP Authorization header to use HTTP Basic Authentication
 // with the provided username and password.
-func WithBasicAuth(username, password string) optparams.Func[doParams] {
+func WithBasicAuth(username, password string) Option {
 	enc := base64.StdEncoding.EncodeToString([]byte(username + ":" + password))
 	return WithAuth("Basic " + enc)
 }
@@ -97,7 +99,7 @@ var ErrBodyAlreadyExists = errors.New("body already exists")
 
 // WithBody adds the given data as the body content. If the body is already set,
 // it causes the [ErrBodyAlreadyExists] error.
-func WithBody(data io.Reader) optparams.Func[doParams] {
+func WithBody(data io.Reader) Option {
 	return func(params *doParams) error {
 		if params.body != nil {
 			return ErrBodyAlreadyExists
@@ -111,7 +113,7 @@ func WithBody(data io.Reader) optparams.Func[doParams] {
 
 // WithBytes adds the given bytes as the body content. If the body is already
 // set, it causes the [ErrBodyAlreadyExists] error.
-func WithBytes(data []byte) optparams.Func[doParams] {
+func WithBytes(data []byte) Option {
 	return func(params *doParams) error {
 		if params.body != nil {
 			return ErrBodyAlreadyExists
@@ -126,7 +128,7 @@ func WithBytes(data []byte) optparams.Func[doParams] {
 // WithTextPlain adds the given text as the body content and sets the content
 // type as "text/plain". If the body is already set, it causes
 // the [ErrBodyAlreadyExists] error.
-func WithTextPlain(data string) optparams.Func[doParams] {
+func WithTextPlain(data string) Option {
 	return optparams.Join[doParams](
 		func(params *doParams) error {
 			if params.body != nil {
@@ -144,7 +146,7 @@ func WithTextPlain(data string) optparams.Func[doParams] {
 // WithJSON encodes the given data in JSON format as the body content and sets
 // the content type as "application/json". If the body is already set, it causes
 // the [ErrBodyAlreadyExists] error.
-func WithJSON(data any) optparams.Func[doParams] {
+func WithJSON(data any) Option {
 	return optparams.Join[doParams](
 		func(params *doParams) error {
 			if params.body != nil {
@@ -166,7 +168,7 @@ func WithJSON(data any) optparams.Func[doParams] {
 // WithXML encodes the given data in XML format as the body content and sets
 // the content type as "application/xml". If the body is already set, it causes
 // the [ErrBodyAlreadyExists] error.
-func WithXML(data any) optparams.Func[doParams] {
+func WithXML(data any) Option {
 	return optparams.Join[doParams](
 		func(params *doParams) error {
 			if params.body != nil {
@@ -195,7 +197,7 @@ func WithMultipartForm() *MultipartFormBuilder {
 
 // WithHandlerBeforeResponse adds the given handler to call it right before
 // the sending HTTP request.
-func WithHandlerBeforeResponse(handler BeforeResponseHandler) optparams.Func[doParams] {
+func WithHandlerBeforeResponse(handler BeforeResponseHandler) Option {
 	return func(params *doParams) error {
 		params.handler.beforeResponse = append(params.handler.beforeResponse, handler)
 		return nil
@@ -204,7 +206,7 @@ func WithHandlerBeforeResponse(handler BeforeResponseHandler) optparams.Func[doP
 
 // WithHandlerAfterResponse adds the given handler to call it immediately after
 // receiving non-nil [net/http.Response].
-func WithHandlerAfterResponse(handler AfterResponseHandler) optparams.Func[doParams] {
+func WithHandlerAfterResponse(handler AfterResponseHandler) Option {
 	return func(params *doParams) error {
 		params.handler.afterResponse = append(params.handler.afterResponse, handler)
 		return nil

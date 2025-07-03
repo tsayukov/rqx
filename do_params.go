@@ -22,7 +22,7 @@ type doParams struct {
 	handler    handler
 }
 
-func newDoParams(opts ...optparams.Func[doParams]) (*doParams, error) {
+func newDoParams(opts ...Option) (*doParams, error) {
 	params := &doParams{
 		headers: make(http.Header),
 	}

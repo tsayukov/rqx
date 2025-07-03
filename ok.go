@@ -6,8 +6,6 @@ package rqx
 import (
 	"net/http"
 	"slices"
-
-	"github.com/tsayukov/optparams"
 )
 
 // OKStatuses are HTTP response status codes that are successful.
@@ -16,7 +14,7 @@ type OKStatuses responseStatuses
 // To sets a handler for [OKStatuses]. The handler uses [Decoder] to read
 // and store decoded [net/http.Response.Body] to the value
 // pointed to by the given result.
-func (o OKStatuses) To(result any, decoder Decoder) optparams.Func[doParams] {
+func (o OKStatuses) To(result any, decoder Decoder) Option {
 	return func(params *doParams) error {
 		params.handler.okResponse = func(resp *http.Response) (any, error) {
 			if !slices.Contains(o, resp.StatusCode) {
@@ -37,13 +35,13 @@ func (o OKStatuses) To(result any, decoder Decoder) optparams.Func[doParams] {
 // ToJSON sets a handler for [OKStatuses]. The handler reads and stores
 // JSON-decoded [net/http.Response.Body] to the value pointed to by the given
 // result.
-func (o OKStatuses) ToJSON(result any) optparams.Func[doParams] {
+func (o OKStatuses) ToJSON(result any) Option {
 	return o.To(result, jsonDecoder)
 }
 
 // ToXML sets a handler for [OKStatuses]. The handler reads and stores
 // XML-decoded [net/http.Response.Body] to the value pointed to by the given
 // result.
-func (o OKStatuses) ToXML(result any) optparams.Func[doParams] {
+func (o OKStatuses) ToXML(result any) Option {
 	return o.To(result, xmlDecoder)
 }

@@ -8,8 +8,6 @@ import (
 	"errors"
 	"net/http"
 	"slices"
-
-	"github.com/tsayukov/optparams"
 )
 
 // RateLimitStatuses are HTTP response status codes that are returned
@@ -22,7 +20,7 @@ var errRateLimit = errors.New("rate limit exceeded")
 // Note that when the request body is [io.Closer], [RateLimitHandler]
 // is not allowed, because the body will be closed by [net/http.Client.Do]
 // before the next attempt.
-func (rc RateLimitStatuses) Cooldown(handler RateLimitHandler) optparams.Func[doParams] {
+func (rc RateLimitStatuses) Cooldown(handler RateLimitHandler) Option {
 	return func(params *doParams) error {
 		if handler == nil {
 			return errors.New("rate limit handler is nil")

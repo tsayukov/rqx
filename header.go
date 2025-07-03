@@ -5,8 +5,6 @@ package rqx
 
 import (
 	"net/textproto"
-
-	"github.com/tsayukov/optparams"
 )
 
 type HeaderAppendMode bool
@@ -20,7 +18,7 @@ type withHeaderOptions struct {
 	doesAddValueToEnd  bool
 }
 
-func withHeader(key HeaderKey, value string, options withHeaderOptions) optparams.Func[doParams] {
+func withHeader(key HeaderKey, value string, options withHeaderOptions) Option {
 	canonicalKey := string(key)
 	if !options.isKeyCanonicalized {
 		canonicalKey = textproto.CanonicalMIMEHeaderKey(canonicalKey)

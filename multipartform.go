@@ -12,8 +12,6 @@ import (
 	"net/textproto"
 	"os"
 	"strings"
-
-	"github.com/tsayukov/optparams"
 )
 
 // MultipartFormBuilder is a builder to constructs consecutive multipart
@@ -107,7 +105,7 @@ func (b *MultipartFormBuilder) AddAsFileWithType(
 }
 
 // Body creates a body with the multipart sections and the proper content type.
-func (b *MultipartFormBuilder) Body() optparams.Func[doParams] {
+func (b *MultipartFormBuilder) Body() Option {
 	return func(params *doParams) error {
 		if len(b.errs) > 0 {
 			return errors.Join(b.errs...)
