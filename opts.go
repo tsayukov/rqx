@@ -4,9 +4,15 @@
 package rqx
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json"
+	"encoding/xml"
+	"errors"
+	"io"
 	"net/http"
+	"strings"
 
 	"github.com/tsayukov/optparams"
 )
@@ -84,4 +90,96 @@ func WithAuth(value string, appendMode ...HeaderAppendMode) optparams.Func[doPar
 func WithBasicAuth(username, password string) optparams.Func[doParams] {
 	enc := base64.StdEncoding.EncodeToString([]byte(username + ":" + password))
 	return WithAuth("Basic " + enc)
+}
+
+var ErrBodyAlreadyExists = errors.New("body already exists")
+
+// WithBody adds the given data as the body content. If the body is already set,
+// it causes the [ErrBodyAlreadyExists] error.
+func WithBody(data io.Reader) optparams.Func[doParams] {
+	return func(params *doParams) error {
+		if params.body != nil {
+			return ErrBodyAlreadyExists
+		}
+
+		params.body = data
+
+		return nil
+	}
+}
+
+// WithBytes adds the given bytes as the body content. If the body is already
+// set, it causes the [ErrBodyAlreadyExists] error.
+func WithBytes(data []byte) optparams.Func[doParams] {
+	return func(params *doParams) error {
+		if params.body != nil {
+			return ErrBodyAlreadyExists
+		}
+
+		params.body = bytes.NewReader(data)
+
+		return nil
+	}
+}
+
+// WithTextPlain adds the given text as the body content and sets the content
+// type as "text/plain". If the body is already set, it causes
+// the [ErrBodyAlreadyExists] error.
+func WithTextPlain(data string) optparams.Func[doParams] {
+	return optparams.Join[doParams](
+		func(params *doParams) error {
+			if params.body != nil {
+				return ErrBodyAlreadyExists
+			}
+
+			params.body = strings.NewReader(data)
+
+			return nil
+		},
+		WithContentType(string(ContentTextPlain)),
+	)
+}
+
+// WithJSON encodes the given data in JSON format as the body content and sets
+// the content type as "application/json". If the body is already set, it causes
+// the [ErrBodyAlreadyExists] error.
+func WithJSON(data any) optparams.Func[doParams] {
+	return optparams.Join[doParams](
+		func(params *doParams) error {
+			if params.body != nil {
+				return ErrBodyAlreadyExists
+			}
+
+			var buffer bytes.Buffer
+			if err := json.NewEncoder(&buffer).Encode(data); err != nil {
+				return err
+			}
+			params.body = bytes.NewReader(buffer.Bytes())
+
+			return nil
+		},
+		WithContentType(string(ContentJSON)),
+	)
+}
+
+// WithXML encodes the given data in XML format as the body content and sets
+// the content type as "application/xml". If the body is already set, it causes
+// the [ErrBodyAlreadyExists] error.
+func WithXML(data any) optparams.Func[doParams] {
+	return optparams.Join[doParams](
+		func(params *doParams) error {
+			if params.body != nil {
+				return ErrBodyAlreadyExists
+			}
+
+			var buffer bytes.Buffer
+			if err := xml.NewEncoder(&buffer).Encode(data); err != nil {
+				return err
+			}
+			params.body = bytes.NewReader(buffer.Bytes())
+
+			return nil
+		},
+		WithContentType(string(ContentXML)),
+	)
 }
