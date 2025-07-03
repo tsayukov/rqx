@@ -5,7 +5,6 @@ package rqx
 
 import (
 	"errors"
-	"io"
 	"net/http"
 )
 
@@ -125,7 +124,7 @@ func do(httpMethod HTTPMethod, url string, params *doParams) (tryAgain bool, ret
 		return false, err
 	}
 
-	defer func(body io.ReadCloser) { retErr = errors.Join(retErr, body.Close()) }(resp.Body)
+	defer func() { retErr = errors.Join(retErr, resp.Body.Close()) }()
 
 	if err := params.handler.applyAfter(resp); err != nil {
 		return false, err
