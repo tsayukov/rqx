@@ -290,6 +290,7 @@ linters:
         linters:
           - unused
           - goconst
+          - gocognit
       - source: "^func Test"
         linters:
           - funlen
