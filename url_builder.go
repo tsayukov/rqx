@@ -44,6 +44,9 @@ func (u *urlBuilder) appendQuery(data any) error {
 
 func (u *urlBuilder) build(base string) string {
 	var url strings.Builder
+
+	base = strings.TrimRight(base, "/")
+
 	url.Grow(len(base) + u.length)
 
 	url.WriteString(base)
