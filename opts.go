@@ -223,9 +223,7 @@ func WithOK(statuses ...int) OKStatuses {
 	return statuses
 }
 
-func withStatuses[S interface {
-	ErrorStatuses | RateLimitStatuses
-}](status int, statuses ...int) S {
+func withStatuses[S ~[]int](status int, statuses ...int) S {
 	s := make(S, 0, 1+len(statuses))
 	s = append(s, status)
 	s = append(s, statuses...)
@@ -234,8 +232,8 @@ func withStatuses[S interface {
 }
 
 // WithError returns [ErrorStatuses] to add a handler for the error HTTP response.
-func WithError(status int, statuses ...int) ErrorStatuses {
-	return withStatuses[ErrorStatuses](status, statuses...)
+func WithError[E error](status int, statuses ...int) ErrorStatuses[E] {
+	return withStatuses[ErrorStatuses[E]](status, statuses...)
 }
 
 // WithRateLimit returns [RateLimitStatuses] to add a handler for the error HTTP
