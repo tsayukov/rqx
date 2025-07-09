@@ -180,3 +180,19 @@ func Test_urlBuilder(t *testing.T) {
 		})
 	}
 }
+
+func Test_FromInt(t *testing.T) {
+	assert.Equal(t, "42", FromInt(42))
+	assert.Equal(t, "42", FromInt(int8(42)))
+	assert.Equal(t, "42", FromInt(int16(42)))
+	assert.Equal(t, "42", FromInt(int32(42)))
+	assert.Equal(t, "42", FromInt(int64(42)))
+}
+
+func Test_FromUint(t *testing.T) {
+	assert.Equal(t, "42", FromUint(uint(42)))
+	assert.Equal(t, "42", FromUint(uint8(42)))
+	assert.Equal(t, "42", FromUint(uint16(42)))
+	assert.Equal(t, "42", FromUint(uint32(42)))
+	assert.Equal(t, "42", FromUint(uint64(42)))
+}
