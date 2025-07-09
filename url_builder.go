@@ -4,10 +4,27 @@
 package rqx
 
 import (
+	"strconv"
 	"strings"
 
 	querypkg "github.com/google/go-querystring/query"
 )
+
+// FromInt returns the string representation of the given integer value.
+// Use it to construct a URL with path parameters.
+func FromInt[T interface {
+	~int | ~int8 | ~int16 | ~int32 | ~int64
+}](value T) string {
+	return strconv.FormatInt(int64(value), 10)
+}
+
+// FromUint returns the string representation of the given unsigned integer
+// value. Use it to construct a URL with path parameters.
+func FromUint[T interface {
+	~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64
+}](value T) string {
+	return strconv.FormatUint(uint64(value), 10)
+}
 
 type urlBuilder struct {
 	length  int
