@@ -43,6 +43,10 @@ import (
 //   - [WithOK];
 //   - [WithError];
 //   - [WithRateLimit].
+//
+// Error Wrapper options:
+//   - [WithErrorPrefix];
+//   - [WithErrorWrapper].
 func Do(httpMethod HTTPMethod, url string, opts ...Option) error {
 	params, err := newDoParams(opts...)
 	if err != nil {
@@ -112,39 +116,39 @@ func prepareRequest(httpMethod HTTPMethod, url string, params *doParams) (*http.
 func do(httpMethod HTTPMethod, url string, params *doParams) (tryAgain bool, retErr error) {
 	req, err := prepareRequest(httpMethod, url, params)
 	if err != nil {
-		return false, err
+		return false, params.errorWrapper(err)
 	}
 
 	if err := params.handler.applyBefore(req); err != nil {
-		return false, err
+		return false, params.errorWrapper(err)
 	}
 
 	resp, err := params.client.Do(req)
 	if err != nil {
-		return false, err
+		return false, params.errorWrapper(err)
 	}
 
-	defer func() { retErr = errors.Join(retErr, resp.Body.Close()) }()
+	defer func() { retErr = errors.Join(retErr, params.errorWrapper(resp.Body.Close())) }()
 
 	if err := params.handler.applyAfter(resp); err != nil {
-		return false, err
+		return false, params.errorWrapper(err)
 	}
 
 	if match, err := params.handler.matchOK(resp); match { // if HTTP statuses are OK
-		return false, err // nil or error
+		return false, params.errorWrapper(err) // nil or error
 	}
 
 	if err := params.handler.matchError(resp); err != nil {
 		if errors.Is(err, errRateLimit) && params.handler.rateLimitResponse != nil {
 			if err := params.handler.rateLimitResponse(params.ctx, resp); err != nil {
-				return false, err
+				return false, params.errorWrapper(err)
 			}
 
 			return true, nil
 		}
 
-		return false, err
+		return false, params.errorWrapper(err)
 	}
 
-	return false, newUnhandledResponse(resp)
+	return false, params.errorWrapper(newUnhandledResponse(resp))
 }

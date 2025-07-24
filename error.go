@@ -52,6 +52,8 @@ func (e ErrorStatuses[E]) ToXML() Option {
 	return e.To(xmlDecoder)
 }
 
+type ErrorWrapperFunc func(error) error
+
 // UnhandledResponseError is an error for the response that did not match
 // any handlers.
 type UnhandledResponseError struct {
