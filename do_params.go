@@ -14,12 +14,13 @@ import (
 
 // doParams holds required and optional arguments of [Do].
 type doParams struct {
-	ctx        context.Context
-	client     *http.Client
-	urlBuilder urlBuilder
-	headers    http.Header
-	body       io.Reader
-	handler    handler
+	ctx          context.Context
+	client       *http.Client
+	urlBuilder   urlBuilder
+	headers      http.Header
+	body         io.Reader
+	handler      handler
+	errorWrapper ErrorWrapperFunc
 }
 
 func newDoParams(opts ...Option) (*doParams, error) {
@@ -30,6 +31,7 @@ func newDoParams(opts ...Option) (*doParams, error) {
 	opts = append(opts,
 		optparams.Default[doParams](&params.ctx, context.Background()),
 		optparams.Default[doParams](&params.client, http.DefaultClient),
+		optparams.Default[doParams](&params.errorWrapper, func(err error) error { return err }),
 	)
 
 	if err := optparams.Apply(params, opts...); err != nil {

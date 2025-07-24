@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -240,4 +241,40 @@ func WithError[E error](status int, statuses ...int) ErrorStatuses[E] {
 // response when the rate limit is reached.
 func WithRateLimit(status int, statuses ...int) RateLimitStatuses {
 	return withStatuses[RateLimitStatuses](status, statuses...)
+}
+
+var ErrErrorWrapperAlreadyExists = errors.New("error wrapper already exists")
+
+// WithErrorPrefix prepends the given prefix with the following separator
+// to all non-nil errors.
+//
+// By default, the separator is a colon with a space.
+func WithErrorPrefix(prefix string, separator ...string) Option {
+	sep := ": "
+	if len(separator) != 0 {
+		sep = separator[0]
+	}
+
+	return WithErrorWrapper(func(err error) error {
+		return fmt.Errorf("%s%s%w", prefix, sep, err)
+	})
+}
+
+// WithErrorWrapper wraps all non-nil errors with the given wrapper.
+func WithErrorWrapper(wrapper ErrorWrapperFunc) Option {
+	return func(params *doParams) error {
+		if params.errorWrapper != nil {
+			return ErrErrorWrapperAlreadyExists
+		}
+
+		params.errorWrapper = func(err error) error {
+			if err == nil {
+				return nil
+			}
+
+			return wrapper(err)
+		}
+
+		return nil
+	}
 }
